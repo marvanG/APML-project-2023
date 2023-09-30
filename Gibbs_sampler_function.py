@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import truncnorm
 
-def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, y):
+def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, y):
     """
     Perform Gibbs sampling.
 
@@ -16,6 +16,8 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, y):
     Returns:
     - s1_list, s2_list (list): List of sampled values for s1 and s2.
     """
+    print('Running Gibbs sampling...')
+
     # Parameters
     A = np.array([[1, -1]]) # Matrix A
     s1 = float(s1_s2_mean_col[0])
@@ -31,34 +33,33 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, y):
     else:
         raise ValueError("Error: y must be 1 or -1")
 
-    s1_mean_list, s2_mean_list, s_covar_matrix1, s_covar_matrix2, s1_list, s2_list = [], [], [], [], [], []
+    s1_list, s2_list = [], []
 
     for i in range(N_iterations):
         # Sample t from p(t|s1,s2,y)
         mean_t = s1 - s2
-        conditional_Vt = s_covar_matrix[0,0] + s_covar_matrix[1,1]
-        t = truncnorm.rvs((a - mean_t) / np.sqrt(conditional_Vt), (b - mean_t) / np.sqrt(conditional_Vt), loc=mean_t, scale=np.sqrt(conditional_Vt))
+        # print(f'mean_t: {mean_t}')
+        t = truncnorm.rvs((a - mean_t) / np.sqrt(t_Var), (b - mean_t) / np.sqrt(t_Var), loc=mean_t, scale=np.sqrt(t_Var), size=1)
 
-        # Sample s1 and s2 from multivariate normal, p(s1,s2|t>0)
-        s_covar_matrix_old = s_covar_matrix
-        s_covar_matrix = np.linalg.inv(np.linalg.inv(s_covar_matrix) + np.transpose(A) @A*(1/5))
-        s1_s2_mean_col = s_covar_matrix @ (np.linalg.inv(s_covar_matrix_old) @ s1_s2_mean_col + np.transpose(A) * (1/5) * t)
+        # Sample s1 and s2 from multivariate normal, p(s1,s2|t,y)
+        s_sampling_covarmatrix = np.linalg.inv(np.linalg.inv(s_covar_matrix) + np.transpose(A) @A*(1/t_Var))
+        s_sampling_mean = s_sampling_covarmatrix @ (np.linalg.inv(s_covar_matrix) @ s1_s2_mean_col + np.transpose(A) * (1/t_Var) * t)
 
-        s1, s2 = np.random.multivariate_normal(s1_s2_mean_col.flatten(), s_covar_matrix, 1).T
+        s1, s2 = np.random.multivariate_normal(s_sampling_mean.flatten(), s_sampling_covarmatrix, 1).T 
 
-        # Save values to lists
-        s1_mean_list.append(float(s1_s2_mean_col[0]))
-        s2_mean_list.append(float(s1_s2_mean_col[1]))
-        s_covar_matrix1.append(float(s_covar_matrix[0][0]))
-        s_covar_matrix2.append(float(s_covar_matrix[1][1]))
+        # Save values and lists
         s1_list.append(float(s1))
         s2_list.append(float(s2))
-
-    return s1_mean_list, s2_mean_list, s_covar_matrix1, s_covar_matrix2, s1_list, s2_list
-
-
+        
+    return s1_list, s2_list
 
 
+
+# s1_var = np.var(s1_list)
+#     s2_var = np.var(s2_list)
+
+#     s1_mean = np.mean(s1_list)
+#     s2_mean = np.mean(s2_list)
 
 
 
@@ -68,30 +69,77 @@ if __name__ == "__main__":
     # Make sure you define the required parameters: samples, s1_s2_mean_col, s_covar_matrix, A, a, b, Vt
     samples = 3000
     s1_s2_mean_col = np.array([[25], [25]])
-    s_covar_matrix = np.array([[8, 0], [0, 8]])
-
-    a = 0
-    b = np.inf
+    s_covar_matrix = np.array([[64, 0], [0, 64]])
+    Vt = 5
     y = 1
-    
 
-    s1_means, s2_means, s1_vars, s2_vars, s1_samples, s2_samples = gibbs_sampling(samples, s1_s2_mean_col, s_covar_matrix, y)
+    s1_samples, s2_samples = gibbs_sampling(samples, s1_s2_mean_col, s_covar_matrix, Vt, y)
+
+    burn_in = 500
+    s1_samples = s1_samples[burn_in:]
+    s2_samples = s2_samples[burn_in:]
+
     print(len(s1_samples))
     print(len(s2_samples))
-    #print(s1_samples)
+
+    # Print the results
+    s1_mean = np.mean(s1_samples)
+    s2_mean = np.mean(s2_samples)
+    s1_var = np.var(s1_samples)
+    s2_var = np.var(s2_samples)
+    print(f"\nMean of s1: {s1_mean}")
+    print(f"\nMean of s2: {s2_mean}")
+    print(f'\nVariance of s1: {s1_var}')
+    print(f'\nVariance of s2: {s2_var}')
+
 
     # Plot the results
     import matplotlib.pyplot as plt
-    plt.figure(figsize=(10, 6))
+    from scipy.stats import norm
+    print("\nPlotting the results...")
+    plt.figure(1, figsize=(10, 6))
+
+    # Plot s1
     plt.subplot(2, 2, 1)
-    plt.plot(range(samples), s1_samples)
+    plt.plot(s1_samples, label="s1 samples")
+    plt.xlabel("Iteration")
+    plt.ylabel("s1")
+    plt.legend()
     plt.title("s1 samples")
+
+    # Plot s2
     plt.subplot(2, 2, 2)
-    plt.plot(s2_samples)
+    plt.plot(s2_samples, label="s2 samples")
+    plt.xlabel("Iteration")
+    plt.ylabel("s2")
+    plt.legend()
     plt.title("s2 samples")
+
+    plt.tight_layout()
     plt.show()
-    plt.figure(figsize=(10, 6))
-    plt.hist(s1_samples, bins=50)
+
+    # Historgram
+    plt.figure(2, figsize=(10, 6))
+
+    # Plot s1 histogram
+    plt.subplot(2, 2, 1)
+    plt.hist(s1_samples, bins=50, density=True)
     plt.title("s1 histogram")
+
+    # Plot s1 pdf
+    x = np.linspace(min(s1_samples)-5, max(s1_samples)+5, 100)
+    plt.plot(x, norm.pdf(x, s1_mean, np.sqrt(s1_var)), label="s1 pdf", color="red")
+
+
+    # Plot s2
+    plt.subplot(2, 2, 2)
+    plt.hist(s2_samples, bins=50, density=True)
+    plt.title("s2 histogram")
+
+    # Plot s2 pdf
+    x = np.linspace(min(s2_samples)-5, max(s2_samples)+5, 100)
+    plt.plot(x, norm.pdf(x, s2_mean, np.sqrt(s2_var)), label="s2 pdf", color="red")
+    plt.tight_layout()
     plt.show()
+
 

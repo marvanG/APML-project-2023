@@ -14,26 +14,15 @@ def preprocess_serieA_no_draws(games_df):
     - games_df (pd.DataFrame): Processed dataframe without draw games.
     """
 
-    # print(f'Shape of the games dataset: {games_df.shape}')
-    # print(f'first 3 rows:\n{games_df.head(3)}')
-    # print('\nDescription of the games dataset:') 
-    # print(games_df.describe())
-
     # Remove draw games
     draw_games_df = games_df[games_df['score1'] == games_df['score2']]
     games_df = games_df.drop(draw_games_df.index)
-    # print(f'\nShape of the draw games dataset: {draw_games_df.shape}')
-    # print(f'first 3 rows of draw games:\n{draw_games_df.head(3)}')
-    # print(f'\nShape of the games dataset after removing draw games: {games_df.shape}')
 
-    # Create a new column with the result of the game
-    games_df['y'] = games_df.apply(lambda row: 1 if row['score1'] > row['score2'] else -1, axis=1)
-    # print(f'first 3 rows of no-draw games:\n{games_df.head(3)}')
+    # Create a column with the score difference of the game
+    games_df['score_diff'] = games_df.apply(lambda row: row['score1'] - row['score2'], axis=1)
 
     # Remove unnecessary columns (score1, score2, HH:MM, yyyy-mm-dd)
     games_df = games_df.drop(['score1', 'score2', 'HH:MM', 'yyyy-mm-dd'], axis=1)
-    # print(f'\nShape of the games dataset after removing unnecessary columns: {games_df.shape}')
-    # print(f'first 3 rows of no-draw games:\n{games_df.head(3)}')
 
     return games_df
 

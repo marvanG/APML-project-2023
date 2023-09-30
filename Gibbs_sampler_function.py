@@ -34,6 +34,7 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, y):
         raise ValueError("Error: y must be 1 or -1")
 
     s1_list, s2_list = [], []
+    s_sampling_covarmatrix = np.linalg.inv(np.linalg.inv(s_covar_matrix) + np.transpose(A) @A*(1/t_Var))
 
     for i in range(N_iterations):
         # Sample t from p(t|s1,s2,y)
@@ -42,7 +43,7 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, y):
         t = truncnorm.rvs((a - mean_t) / np.sqrt(t_Var), (b - mean_t) / np.sqrt(t_Var), loc=mean_t, scale=np.sqrt(t_Var), size=1)
 
         # Sample s1 and s2 from multivariate normal, p(s1,s2|t,y)
-        s_sampling_covarmatrix = np.linalg.inv(np.linalg.inv(s_covar_matrix) + np.transpose(A) @A*(1/t_Var))
+        
         s_sampling_mean = s_sampling_covarmatrix @ (np.linalg.inv(s_covar_matrix) @ s1_s2_mean_col + np.transpose(A) * (1/t_Var) * t)
 
         s1, s2 = np.random.multivariate_normal(s_sampling_mean.flatten(), s_sampling_covarmatrix, 1).T 

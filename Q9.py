@@ -48,6 +48,7 @@ prior_s1_mean=25
 prior_s2_mean=25
 prior_s1_var=64
 prior_s2_var=64
+y=1
 #factor functions 
 factor_s1_mean=prior_s1_mean
 factor_s2_mean=prior_s2_mean
@@ -61,7 +62,12 @@ mu_3_var=prior_s2_var
 mu_6_mean=mu_2_mean-mu_3_mean
 mu_6_var=mu_2_var+mu_3_var+factor_s2_var
 
-if y0 == 1:
+if y == 1:
     a, b = 0, np.Inf
 else:
     a, b = np.NINF , 0
+
+#here we find the mean and variance of the truncated based on the result of the game 
+pt_m , pt_v = truncGaussMM (a, b, mu_6_mean , mu_6_var )
+
+mu_9_mean,mu_9_var=divideGauss(pt_m,pt_v,mu_6_mean,mu_6_var)

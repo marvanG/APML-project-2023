@@ -20,7 +20,8 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
    
 
     # Parameters
-    y = sign(score_diff)
+    # y = sign(score_diff)
+    y=score_diff
     A = np.array([[1, -1]]) # Matrix A
     s1 = float(s1_s2_mean_col[0])
     s2 = float(s1_s2_mean_col[1])
@@ -74,7 +75,7 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     for i in range(N_iterations):
         
         # Sample t from p(t|s1,s2,y)
-        mean_t = (s1 - s2) + boost_parameter
+        mean_t = (s1 - s2) #+ boost_parameter
 
         # print(f'mean_t: {mean_t}')
         t = truncnorm.rvs((a - mean_t) / np.sqrt(t_Var), (b - mean_t) / np.sqrt(t_Var), loc=mean_t, scale=np.sqrt(t_Var), size=1)

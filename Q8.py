@@ -53,6 +53,12 @@ prior_s1_mean=25
 prior_s2_mean=25
 prior_s1_var=64
 prior_s2_var=64
+prior_s3_var=20
+
+s1 = np.random.normal(prior_s1_mean, prior_s1_var)
+s2 = np.random.normal(prior_s2_mean, prior_s2_var)
+
+
 y=1
 
 #factor functions 
@@ -85,13 +91,20 @@ pt_m , pt_v = truncGaussMM (a, b, mu_6_mean , mu_6_var)
 
 mu_9_mean,mu_9_var=divideGauss(pt_m,pt_v,mu_6_mean,mu_6_var)
 
-mu_10_mean=1
-mu_10_var=1
-mu_5_mean=1
-mu_5_var=1
+
+p_mean,p_var=mutiplyGauss(s1-s2,mu_9_mean,prior_s3_var,mu_9_var)
+mu_10_mean=(p_mean*prior_s1_var+prior_s1_mean(p_var+prior_s1_var))/(2*prior_s1_var+p_var)
+mu_10_var=(prior_s1_var*(p_var+prior_s1_var))/(2*prior_s1_var+p_var)
+mu_5_mean=(p_mean*prior_s2_var+prior_s2_mean(p_var+prior_s2_var))/(2*prior_s2_var+p_var)
+mu_5_var=(prior_s2_var*(p_var+prior_s2_var))/(2*prior_s2_var+p_var)
+
+
 s1_s2_mean_col = np.array([[prior_s1_mean, prior_s2_mean]]).reshape(-1,1)
 s_cov_matrix = np.array([[prior_s1_var, 0], [0, prior_s2_var]])
 s1_gibbs,s2_gibbs=gibbs_sampling(2000,s1_s2_mean_col,s_cov_matrix,6,1)
+
+
+
 p_mean_s1_t,p_var_s1_t=mutiplyGauss(mu_10_mean,mu_10_var,mu_1_mean,mu_1_var)
 
 plt.hist(s1_gibbs[200:], bins=50, color='blue', alpha=0.7)

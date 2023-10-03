@@ -90,7 +90,50 @@ qt_m , qt_v = truncGaussMM (a, b, mu_6_mean , mu_6_var)
 
 mu_9_mean,mu_9_var=divideGauss(qt_m,qt_v,mu_6_mean,mu_6_var)
 
+p_mean,p_var=mutiplyGauss(s1-s2,prior_s3_var,mu_3_mean,mu_3_var)
+mu_10_mean=p_mean+mu_9_mean
+mu_10_var=p_var+mu_9_var
+p_mean,p_var=mutiplyGauss(s1-s2,prior_s3_var,mu_2_mean,mu_2_var)
+mu_5_mean=p_mean -mu_9_mean
+mu_5_var=p_var+mu_9_var
 
+
+s1_s2_mean_col = np.array([[prior_s1_mean, prior_s2_mean]]).reshape(-1,1)
+s_cov_matrix = np.array([[prior_s1_var, 0], [0, prior_s2_var]])
+s1_gibbs,s2_gibbs=gibbs_sampling(2000,s1_s2_mean_col,s_cov_matrix,6,1)
+
+
+
+p_mean_s1_t,p_var_s1_t=mutiplyGauss(mu_10_mean,mu_10_var,mu_1_mean,mu_1_var)
+p_mean_s2_t,p_var_s2_t=mutiplyGauss(mu_5_mean,mu_5_var,mu_4_mean,mu_4_var)
+plt.hist(s1_gibbs[200:], bins=50, density=True, label=f's1 data')
+# plt.hist(s2_gibbs[200:], bins=50, color='red', alpha=0.7)
+# plt.show()
+print(p_mean_s1_t)
+print(np.mean(s1_gibbs))
+print(p_mean_s2_t)
+print(np.mean(s2_gibbs))
+# mean = 0  # Mean (μ)
+# variance = 1  # Variance (σ²)
+x = np.linspace(p_mean_s1_t- 4 * np.sqrt(p_var_s1_t), p_mean_s1_t + 4 * np.sqrt(p_var_s1_t), 1000)  # Adjust the range as needed
+y = norm.pdf(x, loc=p_mean_s1_t, scale= np.sqrt(p_var_s1_t))
+plt.plot(x, y,color='r', label='Gaussian Distribution')
+plt.title('Gaussian Distribution')
+plt.xlabel('X')
+plt.ylabel('Probability Density')
+plt.legend()
+plt.show()
+
+
+x = np.linspace(p_mean_s2_t- 4 * np.sqrt(p_var_s2_t), p_mean_s2_t + 4 * np.sqrt(p_var_s2_t), 1000)  # Adjust the range as needed
+y = norm.pdf(x, loc=p_mean_s2_t, scale= np.sqrt(p_var_s2_t))
+plt.hist(s2_gibbs[200:], bins=50, density=True, label=f's2 data')
+plt.plot(x, y,color='r', label='Gaussian Distribution')
+plt.title('Gaussian Distribution')
+plt.xlabel('X')
+plt.ylabel('Probability Density')
+plt.legend()
+plt.show()
 p_mean,p_var=mutiplyGauss(s1-s2,prior_s3_var,mu_9_mean,mu_9_var)
 mu_10_mean=p_mean
 mu_10_var=p_var+mu_2_var

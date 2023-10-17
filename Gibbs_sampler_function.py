@@ -34,32 +34,32 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     s_sampling_covarmatrix = s_covar_matrix
 
     # Home team advantage parameter
-    home_advantage_param = 0.3
+    home_advantage_param = -0.4
 
     # score diff skill boost parameter
     if abs(score_diff) <= 1:
         score_diff_param = 0
-    elif abs(score_diff) > 1 and abs(score_diff) <= 4:
+    elif abs(score_diff) > 1:
         score_diff_param = score_diff
-    elif abs(score_diff) > 4:
-        score_diff_param = 4*sign(score_diff)
+  
     else:
         print('Error in score_diff_param')
         return ValueError
 
 
     # Uncertainty offset parameter
-    if (s1_var + s2_var) > 60:
-        uncertainty_offset_param = 12
-    elif (s1_var + s2_var) > 20 and (s1_var + s2_var) <= 60:
-        uncertainty_offset_param = 6
-    elif (s1_var + s2_var) > 2 and (s1_var + s2_var) <= 20:
-        uncertainty_offset_param = 3
-    elif (s1_var + s2_var) <= 2:
-        uncertainty_offset_param = 1
+    if (s1_var + s2_var) > 20:
+        uncertainty_offset_param = 10
+    elif (s1_var + s2_var) > 0.5 and (s1_var + s2_var) <= 20:
+        uncertainty_offset_param = 5
+    elif (s1_var + s2_var) <= 0.5:
+        uncertainty_offset_param = 1.5
     
     
-    boost_parameter = (-home_advantage_param + score_diff_param)/uncertainty_offset_param
+    # boost_parameter = home_advantage_param  / uncertainty_offset_param
+    score_diff_param = score_diff_param / uncertainty_offset_param
+    
+    
 
     # Truncnorm parameters
     if y == 1: # Player 1 wins
@@ -83,9 +83,10 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     for i in range(N_iterations):
 
         # Sample t from p(t|s1,s2,y)
-        mean_t = (s1 - s2) # + boost_parameter # |--Q10 project extension = boost parameter--|
+        mean_t = (s1- s2)  #+ score_diff_param + home_advantage_param # |--Q10 project extension = boost parameter--|
+       
         if y == 0:
-            mean_t *=0.9
+            mean_t *=0.85
        
         t = truncnorm.rvs((a - mean_t) / np.sqrt(t_Var), (b - mean_t) / np.sqrt(t_Var), loc=mean_t, scale=np.sqrt(t_Var), size=1)
 
@@ -108,15 +109,15 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
 
 if __name__ == "__main__":
     # Make sure you define the required parameters: samples, s1_s2_mean_col, s_covar_matrix, A, a, b, Vt
-    samples = 2000
+    samples = 800
     s1_s2_mean_col = np.array([[25], [25]])
-    s_covar_matrix = np.array([[64, 0], [0, 64]])
+    s_covar_matrix = np.array([[0.1, 0], [0, 0.1]])
     Vt = 6
-    score_diff = 1
+    score_diff = 3
 
     s1_samples, s2_samples = gibbs_sampling(samples, s1_s2_mean_col, s_covar_matrix, Vt, score_diff)
 
-    burn_in = 0
+    burn_in = 250
     s1_samples = s1_samples[burn_in:]
     s2_samples = s2_samples[burn_in:]
 

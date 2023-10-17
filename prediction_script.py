@@ -3,7 +3,7 @@
 def prediction(team1_mean, team2_mean, game_type):
 
     if game_type == 'football':
-        home_team_advantage = 1.03
+        home_team_advantage = 1.05
 
         if team1_mean*home_team_advantage >= team2_mean:
             return 1

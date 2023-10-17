@@ -32,26 +32,27 @@ def preprocess_serieA_no_draws(df, dataset_name, remove_draws):
         print(df.head())
 
     elif dataset_name == 'csgo':
-        
-        # Remove draw games
-        draw_games_df = df[df['result_1'] == df['result_2']]
-        df = df.drop(draw_games_df.index)
+        if remove_draws:
+            
+            # Remove draw games
+            draw_games_df = df[df['result_1'] == df['result_2']]
+            df = df.drop(draw_games_df.index)
 
-        # Create a column with the score difference of the game
-        df['score_diff'] = df.apply(lambda row: row['result_1'] - row['result_2'], axis=1)
+            # Create a column with the score difference of the game
+            df['score_diff'] = df.apply(lambda row: row['result_1'] - row['result_2'], axis=1)
 
-        # Remove unnecessary columns (score1, score2, HH:MM, yyyy-mm-dd)
-        df = df[['team_1', 'team_2', 'score_diff', 'map_winner']]
+            # Remove unnecessary columns (score1, score2, HH:MM, yyyy-mm-dd)
+            df = df[['team_1', 'team_2', 'score_diff', 'map_winner']]
 
-        # Rename columns
-        df = df.rename(columns={'team_1': 'team1', 'team_2': 'team2', 'map_winner': 'y'})
+            # Rename columns
+            df = df.rename(columns={'team_1': 'team1', 'team_2': 'team2', 'map_winner': 'y'})
 
-        df['y'] = df['y'].apply(lambda x: 1 if x == 1 else -1)
-        print(df.head())
+            df['y'] = df['y'].apply(lambda x: 1 if x == 1 else -1)
+            print(df.head())
 
-    else:
-        print('Error in dataset name, dataset not recognized')
-        return ValueError
+        else:
+            print('Error in dataset name, dataset not recognized')
+            return ValueError
     
     return df
 

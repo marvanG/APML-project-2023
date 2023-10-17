@@ -5,9 +5,9 @@ import numpy as np
 def ADF(teams_dictionary, dataframe):
 
     # Assumed density filtering (ADF)
-    n_iter = 400
+    n_iter = 800
     t_var = 6
-    burn_in = 10
+    burn_in = 250
 
     # One step ahead prediction
     predictions = []
@@ -23,8 +23,12 @@ def ADF(teams_dictionary, dataframe):
         variance_team2 = float(teams_dictionary[game1[1]][1])
 
         # One-Step-Ahead prediction
-        y_pred = prediction(mean_team1, mean_team2, game_type='football')
-        predictions.append(y_pred)
+        y = np.sign(game1['score_diff'])
+        if abs(y) == 1:
+            y_pred = prediction(mean_team1, mean_team2, game_type='football')
+            predictions.append(y_pred)
+        elif y == 0:
+            y_pred = None
         
         # create mean column and covariance matrix
         s1_s2_mean_col = np.array([[mean_team1, mean_team2]]).reshape(-1,1)
@@ -53,8 +57,9 @@ def ADF(teams_dictionary, dataframe):
         teams_dictionary[game1[1]][1] = s2_var
 
         # Print progress every 100 games
-        if index % 100 == 0:
-            print(f'\nCurrent game: {index}: {game1[0]} with skill {s1_mean} and variance {s1_var} vs {game1[1]} with skill {s2_mean} and variance {s2_var}')
-            print(f'Prediction: {y_pred}, Real score difference: {score_difference}')
+        if index % 30 == 0:
+            print(f'\nCurrent game: {index}: team1 {game1[0]} with prior skill {mean_team1:.1f} and variance {variance_team1:.2f} vs team2 {game1[1]} with skill {mean_team2:.1f} and variance {variance_team2:.2f}')
+            print(f'Prediction: {y_pred}, result : {np.sign(score_difference)}, score difference: {score_difference}')
+            print(f'Updated skill team1: {s1_mean:.1f} and variance {s1_var:.2f} vs team2: {s2_mean:.1f} and variance {s2_var:.2f}')
 
     return teams_dictionary, predictions

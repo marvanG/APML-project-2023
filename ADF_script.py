@@ -2,7 +2,7 @@
 from prediction_script import prediction
 from Gibbs_sampler_function import gibbs_sampling
 import numpy as np
-def ADF(teams_dictionary, dataframe):
+def ADF(teams_dictionary, dataframe,extension):
 
     # Assumed density filtering (ADF)
     n_iter = 800
@@ -37,7 +37,7 @@ def ADF(teams_dictionary, dataframe):
         score_difference = game1['score_diff']
         
 
-        s1_samples, s2_samples = gibbs_sampling(n_iter, s1_s2_mean_col, s_cov_matrix, t_var, score_difference)
+        s1_samples, s2_samples = gibbs_sampling(n_iter, s1_s2_mean_col, s_cov_matrix, t_var, score_difference,extension=extension)
 
         # results
         s1_samples = s1_samples[burn_in:]

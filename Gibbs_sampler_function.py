@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import truncnorm
 from numpy import sign
 
-def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_diff):
+def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_diff,extension):
     """
     Perform Gibbs sampling.
 
@@ -18,13 +18,11 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     - s1_list, s2_list (list): List of sampled values for s1 and s2.
     """
    
-
-    # Parameters
+        # Parameters
     if score_diff == 0:
         y = 0
     else:
         y= sign(score_diff)
-
     
     A = np.array([[1, -1]]) # Matrix A
     s1 = float(s1_s2_mean_col[0])
@@ -83,8 +81,11 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     for i in range(N_iterations):
 
         # Sample t from p(t|s1,s2,y)
-        mean_t = (s1- s2)  #+ score_diff_param + home_advantage_param # |--Q10 project extension = boost parameter--|
-       
+        if extension:
+            mean_t = (s1- s2) + score_diff_param + home_advantage_param # |--Q10 project extension = boost parameter--|
+        else:
+            mean_t = (s1- s2) 
+            
         if y == 0:
             mean_t *=0.85
        

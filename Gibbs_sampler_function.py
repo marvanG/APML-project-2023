@@ -78,25 +78,37 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
     s1_list, s2_list = [], []
     
 
+   
+    t = 0
+
+    s_old_var = s_sampling_covarmatrix
+    s_sampling_covarmatrix = np.linalg.inv(np.linalg.inv(s_sampling_covarmatrix) + np.transpose(A) @A*(1/t_Var))
+    s_mean_old = s1_s2_mean_col
     for i in range(N_iterations):
 
-        # Sample t from p(t|s1,s2,y)
+       
+
+       
+        s1_s2_mean_col = s_sampling_covarmatrix @ (np.linalg.inv(s_old_var) @ s_mean_old + np.transpose(A) * (1/t_Var) * t)
+        s1, s2 = np.random.multivariate_normal(s1_s2_mean_col.flatten(), s_sampling_covarmatrix, 1).T 
+
         if extension:
-            mean_t = (s1- s2) + score_diff_param + home_advantage_param # |--Q10 project extension = boost parameter--|
+            mean_t = (s1- s2) #+ score_diff_param + home_advantage_param # |--Q10 project extension = boost parameter--|
         else:
             mean_t = (s1- s2) 
             
         if y == 0:
             mean_t *=0.85
-       
+
         t = truncnorm.rvs((a - mean_t) / np.sqrt(t_Var), (b - mean_t) / np.sqrt(t_Var), loc=mean_t, scale=np.sqrt(t_Var), size=1)
-
         # Sample s1 and s2 from multivariate normal, p(s1,s2|t,y)
-        s_old_var = s_sampling_covarmatrix
-        s_sampling_covarmatrix = np.linalg.inv(np.linalg.inv(s_sampling_covarmatrix) + np.transpose(A) @A*(1/t_Var))
-        s1_s2_mean_col = s_sampling_covarmatrix @ (np.linalg.inv(s_old_var) @ s1_s2_mean_col + np.transpose(A) * (1/t_Var) * t)
-        s1, s2 = np.random.multivariate_normal(s1_s2_mean_col.flatten(), s_sampling_covarmatrix, 1).T 
 
+        
+ 
+
+        # Sample t from p(t|s1,s2,y)
+        
+        
 
         # Save values and lists
         s1_list.append(float(s1))
@@ -110,15 +122,15 @@ def gibbs_sampling(N_iterations , s1_s2_mean_col, s_covar_matrix, t_Var, score_d
 
 if __name__ == "__main__":
     # Make sure you define the required parameters: samples, s1_s2_mean_col, s_covar_matrix, A, a, b, Vt
-    samples = 800
+    samples = 10000
     s1_s2_mean_col = np.array([[25], [25]])
-    s_covar_matrix = np.array([[0.1, 0], [0, 0.1]])
-    Vt = 6
-    score_diff = 3
+    s_covar_matrix = np.array([[3, 0], [0, 3]])
+    Vt = 30
+    score_diff = 1
 
-    s1_samples, s2_samples = gibbs_sampling(samples, s1_s2_mean_col, s_covar_matrix, Vt, score_diff)
+    s1_samples, s2_samples = gibbs_sampling(samples, s1_s2_mean_col, s_covar_matrix, Vt, score_diff, extension=False)
 
-    burn_in = 250
+    burn_in = 0
     s1_samples = s1_samples[burn_in:]
     s2_samples = s2_samples[burn_in:]
 
